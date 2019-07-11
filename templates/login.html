@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Login to Flicklist</h1>
+    <p>If you don't have an account, click <a href="/register">here</a> to register!</p>
+    <form action="/login" method='POST'>
+        <label>
+            Email:<br>
+            <input type="email" name="email" value="{{ email }}"/>
+        </label>
+        <br>
+        <label>
+            Password:<br>
+            <input type="password" name="password" />
+        </label>
+        <br>
+        
+        <input type="submit" value="Login" />    
+    </form>
+
+{% endblock %}

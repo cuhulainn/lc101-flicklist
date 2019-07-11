@@ -1,17 +1,31 @@
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request, redirect, render_template, session, flash
 from flask_sqlalchemy import SQLAlchemy
 import cgi
 
 app = Flask(__name__)
 app.config['DEBUG'] = True      # displays runtime errors in the browser, too
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://flicklist:MyNewPass@localhost:8889/flicklist'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://flicklist:flicklist@localhost:8889/flicklist'
 app.config['SQLALCHEMY_ECHO'] = True
+app.secret_key = 'gz7QOJv7Osdfs82942FXV'
 
 db = SQLAlchemy(app)
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120))
+    password = db.Column(db.String(120))
+
+    def __init__(self, email, password):
+        self.email = email
+        self.password = password
+    
+    def __repr__(self):
+        return '<User %r>' % self.email
+
+
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120))
+    name = db.Column(db.String(120), unique=True)
     watched = db.Column(db.Boolean)
     rating = db.Column(db.String(20))
 
@@ -21,6 +35,55 @@ class Movie(db.Model):
 
     def __repr__(self):
         return '<Movie %r>' % self.name
+
+@app.before_request
+def require_login():
+    allowed_routes = ['login', 'register']
+    if request.endpoint not in allowed_routes and 'email' not in session:
+        return redirect('/login')
+
+@app.route("/login", methods=["GET","POST"])
+def login():
+    if request.method == "POST":
+        email = request.form['email']
+        password = request.form['password']
+        user = User.query.filter_by(email=email).first()
+        if user and user.password == password:
+            session['email'] = email
+            flash("Logged in!")
+            return redirect("/")
+        else:
+            flash("User password incorrect or user does not exist.", "error")
+            
+
+    return render_template("login.html")
+
+@app.route("/register", methods=["GET","POST"])
+def register():
+    if request.method == "POST":
+        email = request.form['email']
+        password = request.form['password']
+        verify = request.form['verify']
+        
+        # TODO - validate users datac
+ 
+        existing_user = User.query.filter_by(email=email).first()
+        if not existing_user:
+            new_user = User(email, password)
+            db.session.add(new_user)
+            db.session.commit()
+            session['email'] = email
+            return redirect('/')
+        else:
+            #TODO - user better response messaging
+            return '<h1> Duplicate User</h1>'
+
+    return render_template("register.html")
+
+@app.route('/logout')
+def logout():
+    del session['email']
+    return redirect('/')
 
 # a list of movie names that nobody should have to watch
 terrible_movies = [
