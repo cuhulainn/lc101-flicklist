@@ -10,8 +10,8 @@
     </head>
     <body>
         <div style='float: right'>
-          {% if 'user' in session %}
-            {{ session['user'] }}
+          {% if 'email' in session %}
+            {{ session['email'] }}
             <form action="/logout" method="post">
               <input type="submit" value="Log Out" />
             </form>
